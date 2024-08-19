@@ -92,3 +92,21 @@ export class FineractError extends BasicError {
         });
     }
 }
+
+//  Airtel Errors
+
+export class AirtelError extends BasicError{
+    static getTokenFailedError() {
+        return new AirtelError("Get Token Failed From Airtel", {
+            httpCode: 500,
+            mlCode: '5000',
+        });
+    }
+
+    static getKycError() {
+        return new AirtelError("Get Kyc Failed", {
+            httpCode: 500,
+            mlCode: '5000',
+        });
+    }
+} 

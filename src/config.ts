@@ -1,5 +1,5 @@
 import Convict from 'convict';
-import { IdType, TFineractConfig } from './domain/CBSClient';
+import { IdType, TAirtelConfig, TFineractConfig } from './domain/CBSClient';
 import { TSDKSchemeAdapterConfig } from './domain/SDKClient';
 
 interface IConfigSchema {
@@ -10,6 +10,7 @@ interface IConfigSchema {
         DFSP_SERVER_HOST: string;
         DFSP_SERVER_PORT: number;
     };
+    airtel: TAirtelConfig;
     sdkSchemeAdapter: TSDKSchemeAdapterConfig;
 }
 
@@ -121,6 +122,50 @@ const config = Convict<IConfigSchema>({
             env: 'SDK_BASE_URL',
         },
     },
+    airtel:{
+        AIRTEL_BASE_URL: {
+            doc: 'Airtel Base URL',
+            format: String,
+            default: null, // required
+            env: 'AIRTEL_BASE_URL',
+        },
+        CLIENT_ID: {
+            doc: 'Client Id',
+            format: String,
+            default: null, // required
+            env: 'CLIENT_ID',
+        },
+        CLIENT_SECRET: {
+            doc: 'Client Secret',
+            format: String,
+            default: null, // required
+            env: 'CLIENT_SECRET',
+        },
+        GRANT_TYPE: {
+            doc: 'Grant Type',
+            format: String,
+            default: null, // required
+            env: 'GRANT_TYPE',
+        },
+        X_COUNTRY: {
+            doc: 'Country Name',
+            format: String,
+            default: null, // required
+            env: 'X_COUNTRY',
+        },
+        X_CURRENCY: {
+            doc: 'Country Currency',
+            format: String,
+            default: null, // required
+            env: 'X_CURRENCY',
+        },
+        SUPPORTED_ID_TYPE: {
+            doc: 'Supported ID Type',
+            format: String,
+            default: null, // required
+            env: 'SUPPORTED_ID_TYPE',
+        },
+    }
 });
 
 config.validate({ allowed: 'strict' });

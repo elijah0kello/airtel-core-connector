@@ -35,6 +35,7 @@ export type TFineractConfig = {
     FINERACT_PAYMENT_TYPE_ID: string;
 };
 
+
 export enum FineractLookupStage {
     SEARCH = 'search',
     SAVINGSACCOUNT = 'savingsaccount',
@@ -290,3 +291,65 @@ export type TFineractCharge = {
 };
 
 export type TFineractGetChargeResponse = TFineractCharge[];
+
+// Airtel Config
+
+export type TAirtelConfig = {
+    AIRTEL_BASE_URL: string;
+    CLIENT_ID: string;
+    CLIENT_SECRET: string;
+    GRANT_TYPE: string;
+    X_COUNTRY: string;
+    X_CURRENCY: string;
+    SUPPORTED_ID_TYPE: string;
+}
+
+export type TGetKycArgs = {
+    msisdn: string;
+
+}
+
+export type TGetTokenArgs = {
+    clientId: string;
+    clientSecret: string;
+    grantType: string;
+}
+
+export type TAirtelKycResponse = {
+    "data": {
+        "first_name": string;
+        "grade": string;
+        "is_barred": boolean;
+        "is_pin_set": boolean;
+        "last_name": string;
+        "msisdn": string;
+        "dob": string;
+        "account_status": string;
+        "nationatility": string;
+        "id_number": string;
+        "registration": {
+            "status": string
+        }
+    };
+    "status": {
+        "code": string;
+        "message": string;
+        "result_code": string;
+        "success": boolean
+    }
+}
+
+export type TGetTokenResponse = {
+    "access_token": string;
+    "expires_in": string;
+    "token_type": string
+  }
+
+export interface IAirtelClient {
+    airtelConfig: TAirtelConfig;
+    httpClient: IHTTPClient;
+    logger: ILogger;
+    getKyc(deps: TGetKycArgs): Promise<TAirtelKycResponse>;
+    getToken(deps: TGetTokenArgs): Promise<TGetTokenResponse>;
+}
+

@@ -36,6 +36,7 @@ import {
     TFineractTransactionPayload,
     TFineractTransferDeps,
     TFineractGetAccountResponse,
+    IAirtelClient,
 } from './CBSClient';
 import {
     ILogger,
@@ -56,6 +57,7 @@ import {
     TUpdateTransferDeps,
 } from './SDKClient';
 import { FineractError } from './CBSClient';
+import config from 'src/config';
 
 export class CoreConnectorAggregate {
     public IdType: string;
@@ -66,28 +68,32 @@ export class CoreConnectorAggregate {
         private readonly fineractConfig: TFineractConfig,
         private readonly fineractClient: IFineractClient,
         private readonly sdkClient: ISDKClient,
+        private readonly airtelClient : IAirtelClient,
         logger: ILogger,
     ) {
         this.IdType = fineractConfig.FINERACT_ID_TYPE;
         this.logger = logger;
     }
 
-    async getParties(IBAN: string): Promise<TLookupPartyInfoResponse> {
-        this.logger.info(`Get Parties for IBAN ${IBAN}`);
-        const accountNo = this.extractAccountFromIBAN(IBAN);
-        const lookupRes = await this.fineractClient.lookupPartyInfo(accountNo);
+    async getParties(id: string, idType: string): Promise<TLookupPartyInfoResponse> {
+        this.logger.info(`Get Parties for ${id}`);
+        if(!(idType === config.get("airtel.SUPPORTED_ID_TYPE"))){
+            throw ValidationError.unsupportedIdTypeError();
+        }
+        
+        const lookupRes = await this.airtelClient.getKyc({msisdn:id});
         const party = {
             data: {
-                displayName: lookupRes.data.displayName,
-                firstName: lookupRes.data.firstname,
-                idType: IdType.IBAN,
-                idValue: accountNo,
-                lastName: lookupRes.data.lastname,
-                middleName: lookupRes.data.firstname,
+                displayName: `${lookupRes.data.first_name} ${lookupRes.data.last_name}`,
+                firstName: lookupRes.data.first_name,
+                idType: config.get("airtel.SUPPORTED_ID_TYPE"),
+                idValue: id,
+                lastName: lookupRes.data.last_name,
+                middleName: lookupRes.data.first_name,
                 type: PartyType.CONSUMER,
-                kycInformation: `${JSON.stringify(lookupRes.data)}`,
+                kycInformation: `${JSON.stringify(lookupRes)}`,
             },
-            statusCode: lookupRes.status,
+            statusCode: Number(lookupRes.status.code),
         };
         this.logger.info(`Party found`, { party });
         return party;
