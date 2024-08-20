@@ -101,4 +101,11 @@ export class ValidationError extends BasicError {
             httpCode: 400,
         });
     }
+
+    static invalidQuoteError(){
+        return new ValidationError("Invalid Quote Error", {
+            mlCode: '5101',
+            httpCode: 400,
+        });
+    }
 }

@@ -25,7 +25,6 @@
  --------------
  ******/
 
-import { thirdparty } from "@mojaloop/api-snippets";
 import { IHTTPClient, ILogger } from "../interfaces";
 import { AirtelError } from "./errors";
 import { IAirtelClient, TAirtelConfig, TAirtelKycResponse, TGetKycArgs, TGetTokenArgs, TGetTokenResponse } from "./types";
