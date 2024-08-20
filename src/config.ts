@@ -122,7 +122,7 @@ const config = Convict<IConfigSchema>({
             env: 'SDK_BASE_URL',
         },
     },
-    airtel:{
+    airtel: {
         AIRTEL_BASE_URL: {
             doc: 'Airtel Base URL',
             format: String,
@@ -164,6 +164,18 @@ const config = Convict<IConfigSchema>({
             format: String,
             default: null, // required
             env: 'SUPPORTED_ID_TYPE',
+        },
+        SERVICE_CHARGE: {
+            doc: 'Service Charge',
+            format: String,
+            default: null, // required
+            env: 'SERVICE_CHARGE',
+        },
+        EXPIRATION_DURATION: {
+            doc: 'Expiration Duration for Quotes',
+            format: String,
+            default: null, // required
+            env: 'EXPIRATION_DURATION',
         },
     }
 });

@@ -302,6 +302,9 @@ export type TAirtelConfig = {
     X_COUNTRY: string;
     X_CURRENCY: string;
     SUPPORTED_ID_TYPE: string;
+    SERVICE_CHARGE: string;
+    EXPIRATION_DURATION: string;
+    
 }
 
 export type TGetKycArgs = {

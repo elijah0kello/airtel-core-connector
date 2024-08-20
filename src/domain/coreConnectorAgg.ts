@@ -104,14 +104,29 @@ export class CoreConnectorAggregate {
         if (quoteRequest.to.idType !== this.IdType) {
             throw ValidationError.unsupportedIdTypeError();
         }
-        const accountNo = this.extractAccountFromIBAN(quoteRequest.to.idValue);
-        await this.fineractClient.verifyBeneficiary(accountNo);
+
+        if(quoteRequest.currency !== config.get("airtel.X_CURRENCY")){
+            throw ValidationError.unsupportedCurrencyError();
+        }
+
+        const serviceCharge = config.get("airtel.SERVICE_CHARGE")
+
+        const res = await this.airtelClient.getKyc({msisdn:quoteRequest.to.idValue});
+        
+        if(res.data.is_barred){
+            throw ValidationError.accountBarredError();
+        }
+
+        const quoteExpiration = config.get("airtel.EXPIRATION_DURATION")
+        const expiration = new Date()
+        expiration.setHours(expiration.getHours() + Number(quoteExpiration));
+        const expirationJSON = expiration.toJSON();
 
         return {
-            expiration: new Date().toJSON(),
+            expiration: expirationJSON,
             payeeFspCommissionAmount: '0',
             payeeFspCommissionAmountCurrency: quoteRequest.currency,
-            payeeFspFeeAmount: '0',
+            payeeFspFeeAmount: serviceCharge,
             payeeFspFeeAmountCurrency: quoteRequest.currency,
             payeeReceiveAmount: quoteRequest.amount,
             payeeReceiveAmountCurrency: quoteRequest.currency,

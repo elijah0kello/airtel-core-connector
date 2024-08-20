@@ -87,4 +87,18 @@ export class ValidationError extends BasicError {
             details, // object returned to allow for reconciliation later
         });
     }
+
+    static unsupportedCurrencyError(){
+        return new ValidationError("Incorrect Currency", {
+            mlCode: '5106',
+            httpCode: 400,
+        }); 
+    }
+
+    static accountBarredError(){
+        return new ValidationError("Account is Barred", {
+            mlCode: '5400',
+            httpCode: 400,
+        });
+    }
 }
