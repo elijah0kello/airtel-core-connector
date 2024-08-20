@@ -32,7 +32,7 @@ import { IHTTPClient } from '../domain';
 import { CoreConnectorAggregate } from '../domain';
 import { AxiosClientFactory } from '../infra/axiosHttpClient';
 import config from '../config';
-import { CoreConnectorRoutes } from './coreConnectorRoutes';
+import { CoreConnectorRoutes } from './sdkCoreConnectorRoutes';
 import { loggerFactory } from '../infra/logger';
 import { createPlugins } from '../plugins';
 import { AirtelClientFactory, FineractClientFactory} from '../domain/CBSClient';

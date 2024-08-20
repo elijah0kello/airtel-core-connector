@@ -124,4 +124,6 @@ export class CoreConnectorRoutes extends BaseRoutes {
             return this.handleError(error, h);
         }
     }
+
+    
 }

@@ -68,7 +68,7 @@ export class CoreConnectorAggregate {
         private readonly fineractConfig: TFineractConfig,
         private readonly fineractClient: IFineractClient,
         private readonly sdkClient: ISDKClient,
-        private readonly airtelClient : IAirtelClient,
+        private readonly airtelClient: IAirtelClient,
         logger: ILogger,
     ) {
         this.IdType = fineractConfig.FINERACT_ID_TYPE;
@@ -77,11 +77,11 @@ export class CoreConnectorAggregate {
 
     async getParties(id: string, idType: string): Promise<TLookupPartyInfoResponse> {
         this.logger.info(`Get Parties for ${id}`);
-        if(!(idType === config.get("airtel.SUPPORTED_ID_TYPE"))){
+        if (!(idType === config.get("airtel.SUPPORTED_ID_TYPE"))) {
             throw ValidationError.unsupportedIdTypeError();
         }
-        
-        const lookupRes = await this.airtelClient.getKyc({msisdn:id});
+
+        const lookupRes = await this.airtelClient.getKyc({ msisdn: id });
         const party = {
             data: {
                 displayName: `${lookupRes.data.first_name} ${lookupRes.data.last_name}`,
@@ -105,17 +105,13 @@ export class CoreConnectorAggregate {
             throw ValidationError.unsupportedIdTypeError();
         }
 
-        if(quoteRequest.currency !== config.get("airtel.X_CURRENCY")){
+        if (quoteRequest.currency !== config.get("airtel.X_CURRENCY")) {
             throw ValidationError.unsupportedCurrencyError();
         }
 
         const serviceCharge = config.get("airtel.SERVICE_CHARGE")
 
-        const res = await this.airtelClient.getKyc({msisdn:quoteRequest.to.idValue});
-        
-        if(res.data.is_barred){
-            throw ValidationError.accountBarredError();
-        }
+        this.checkAccountBarred(quoteRequest.to.idValue);
 
         const quoteExpiration = config.get("airtel.EXPIRATION_DURATION")
         const expiration = new Date()
@@ -137,36 +133,38 @@ export class CoreConnectorAggregate {
         };
     }
 
+    private async checkAccountBarred(msisdn: string): Promise<void> {
+
+        const res = await this.airtelClient.getKyc({ msisdn: msisdn });
+
+        if (res.data.is_barred) {
+            throw ValidationError.accountBarredError();
+        }
+    }
+
     async receiveTransfer(transfer: TtransferRequest): Promise<TtransferResponse> {
         this.logger.info(`Transfer for  ${this.IdType} ${transfer.to.idValue}`);
         if (transfer.to.idType != this.IdType) {
             throw ValidationError.unsupportedIdTypeError();
         }
+        if (transfer.currency !== config.get("airtel.X_CURRENCY")) {
+            throw ValidationError.unsupportedCurrencyError();
+        }
+        if (!this.validateQuote(transfer)) {
+            throw ValidationError.invalidQuoteError();
+        }
 
-        const accountNo = this.extractAccountFromIBAN(transfer.to.idValue);
-        const res = await this.fineractClient.getAccountId(accountNo);
-        const date = new Date();
-        const transaction: TFineractTransactionPayload = {
-            locale: this.fineractConfig.FINERACT_LOCALE,
-            dateFormat: this.DATE_FORMAT,
-            transactionDate: `${date.getDate()} ${date.getMonth() + 1} ${date.getFullYear()}`,
-            transactionAmount: transfer.amount,
-            paymentTypeId: this.fineractConfig.FINERACT_PAYMENT_TYPE_ID,
-            accountNumber: accountNo,
-            routingCode: randomUUID(),
-            receiptNumber: randomUUID(),
-            bankNumber: this.fineractConfig.FINERACT_BANK_ID,
-        };
-
-        await this.fineractClient.receiveTransfer({
-            accountId: res.accountId as number,
-            transaction: transaction,
-        });
+        this.checkAccountBarred(transfer.to.idValue);
         return {
             completedTimestamp: new Date().toJSON(),
             homeTransactionId: transfer.transferId,
-            transferState: 'COMMITTED',
+            transferState: 'RECEIVED',
         };
+    }
+
+    private validateQuote(transfer: TtransferRequest): boolean {
+        // todo define implmentation
+        return true;
     }
 
     async sendTransfer(transfer: TFineractOutboundTransferRequest): Promise<TFineractOutboundTransferResponse> {
@@ -233,9 +231,9 @@ export class CoreConnectorAggregate {
         // todo: think how to validate account numbers
         const accountNo = IBAN.slice(
             this.fineractConfig.FINERACT_BANK_COUNTRY_CODE.length +
-                this.fineractConfig.FINERACT_CHECK_DIGITS.length +
-                this.fineractConfig.FINERACT_BANK_ID.length +
-                this.fineractConfig.FINERACT_ACCOUNT_PREFIX.length,
+            this.fineractConfig.FINERACT_CHECK_DIGITS.length +
+            this.fineractConfig.FINERACT_BANK_ID.length +
+            this.fineractConfig.FINERACT_ACCOUNT_PREFIX.length,
         );
         this.logger.debug('extracted account number from IBAN:', { accountNo, IBAN });
         if (accountNo.length < 1) {
