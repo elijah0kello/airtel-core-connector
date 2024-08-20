@@ -30,7 +30,7 @@ optionally within square brackets <email>.
 import { Request, ResponseToolkit, ServerRoute } from '@hapi/hapi';
 import OpenAPIBackend, { Context } from 'openapi-backend';
 import { CoreConnectorAggregate } from 'src/domain/coreConnectorAgg';
-import { ILogger, TQuoteRequest, TtransferRequest } from '../domain';
+import { ILogger, TQuoteRequest, TtransferPatchNotificationRequest, TtransferRequest } from '../domain';
 import { BaseRoutes } from './BaseRoutes';
 
 const API_SPEC_FILE = './src/api-spec/core-connector-api-spec.-sdk.yml';
@@ -119,6 +119,16 @@ export class CoreConnectorRoutes extends BaseRoutes {
         const transfer = request.payload as TtransferRequest;
         try {
             const result = await this.aggregate.receiveTransfer(transfer);
+            return this.handleResponse(result, h, 201);
+        } catch (error: unknown) {
+            return this.handleError(error, h);
+        }
+    }
+
+    private async updateTransfers(context: Context, request: Request, h: ResponseToolkit) {
+        const transfer = request.payload as TtransferPatchNotificationRequest;
+        try {
+            const result = await this.aggregate.updateTransfer(transfer);
             return this.handleResponse(result, h, 201);
         } catch (error: unknown) {
             return this.handleError(error, h);

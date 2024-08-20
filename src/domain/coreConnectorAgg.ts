@@ -46,6 +46,7 @@ import {
     TtransferResponse,
     TtransferRequest,
     ValidationError,
+    TtransferPatchNotificationRequest,
 } from './interfaces';
 import {
     ISDKClient,
@@ -165,6 +166,14 @@ export class CoreConnectorAggregate {
     private validateQuote(transfer: TtransferRequest): boolean {
         // todo define implmentation
         return true;
+    }
+
+    async updateTransfer(updateTransferPayload: TtransferPatchNotificationRequest): Promise<void>{
+        this.logger.info('Committing The Transfer');
+        if(updateTransferPayload.currentState !== 'COMPLETED'){
+            throw ValidationError.transferNotCompletedError();
+        }
+        
     }
 
     async sendTransfer(transfer: TFineractOutboundTransferRequest): Promise<TFineractOutboundTransferResponse> {
