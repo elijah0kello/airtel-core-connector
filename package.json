@@ -7,6 +7,7 @@
     "test": "npm run test:unit",
     "test:functional": "jest --testMatch='**/func/**/*.test.ts' --coverage --collectCoverageFrom='**/src/**/*.ts' --detectOpenHandles",
     "test:unit": "jest --testMatch='**/unit/**/*.test.ts'",
+    "test:int": "jest --testMatch='**/int/**/*.test.ts'",
     "test:unit:cov": "npm run test:unit -- --coverage",
     "prepare": "husky || true",
     "clean": "npm run clean:npm; npm run clean:dist",

@@ -216,6 +216,12 @@ export type TFineractClientFactoryDeps = {
     logger: ILogger;
 };
 
+export type TAirtelClientFactoryDeps = {
+    airtelConfig: TAirtelConfig;
+    httpClient: IHTTPClient;
+    logger: ILogger;
+};
+
 export type TCalculateQuoteDeps = {
     amount: number;
 };
@@ -313,9 +319,9 @@ export type TGetKycArgs = {
 }
 
 export type TGetTokenArgs = {
-    clientId: string;
-    clientSecret: string;
-    grantType: string;
+    client_id: string;
+    client_secret: string;
+    grant_type: string;
 }
 
 export type TAirtelKycResponse = {

@@ -15,8 +15,8 @@ paths:
         get:
             tags:
                 - Get Parties
-            summary: Perform Account Lookup in Fineract.
-            description: Lookup a party from a remote fineract instance from IBAN
+            summary: Perform Account Lookup in Airtel.
+            description: Lookup a party from a remote airtel instance from MSISDN
             operationId: getParties
             parameters:
                 - name: ID
@@ -37,7 +37,7 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/PartyInfo'
                 '404':
-                    description: 'Party with IBAN does not exist in fineract'
+                    description: 'Party with MSISDN does not exist in airtel'
                 '500':
                     description: 'Internal Server Error'
 

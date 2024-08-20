@@ -20,13 +20,14 @@
  optionally within square brackets <email>.
 
 
- - Okello Ivan Elijah <elijahokello90@gmail.com>
+ - Niza Tembo <mcwayzj@gmail.com>
 
  --------------
  ******/
 'use strict';
-
 export * from './FineractClientFactory';
 export * from './FineractClient';
+export * from './AirtelClientFactory';
+export * from './AirtelClient';
 export * from './errors';
 export * from './types';
