@@ -57,7 +57,7 @@ import {
     TUpdateTransferDeps,
 } from './SDKClient';
 import { FineractError } from './CBSClient';
-import config from 'src/config';
+import config from '../config';
 
 export class CoreConnectorAggregate {
     public IdType: string;

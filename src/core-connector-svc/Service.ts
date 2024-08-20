@@ -35,7 +35,7 @@ import config from '../config';
 import { CoreConnectorRoutes } from './coreConnectorRoutes';
 import { loggerFactory } from '../infra/logger';
 import { createPlugins } from '../plugins';
-import { FineractClientFactory } from '../domain/CBSClient';
+import { AirtelClientFactory, FineractClientFactory} from '../domain/CBSClient';
 import { SDKClientFactory } from '../domain/SDKClient';
 import { DFSPCoreConnectorRoutes } from './dfspCoreConnectorRoutes';
 
@@ -50,8 +50,15 @@ export class Service {
     static async start(httpClient: IHTTPClient = AxiosClientFactory.createAxiosClientInstance()) {
         this.httpClient = httpClient;
         const fineractConfig = config.get('fineract');
+        const airtelConfig = config.get('airtel');
         const fineractClient = FineractClientFactory.createClient({
             fineractConfig: fineractConfig,
+            httpClient: this.httpClient,
+            logger: logger,
+        });
+
+        const airtelClient = AirtelClientFactory.createClient({
+            airtelConfig: airtelConfig,
             httpClient: this.httpClient,
             logger: logger,
         });
@@ -61,7 +68,7 @@ export class Service {
             httpClient,
             config.get('sdkSchemeAdapter.SDK_BASE_URL'),
         );
-        this.coreConnectorAggregate = new CoreConnectorAggregate(fineractConfig, fineractClient, sdkClient, logger);
+        this.coreConnectorAggregate = new CoreConnectorAggregate(fineractConfig, fineractClient, sdkClient, airtelClient, logger);
 
         await this.setupAndStartUpServer();
         logger.info('Core Connector Server started');
