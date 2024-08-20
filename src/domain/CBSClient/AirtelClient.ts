@@ -30,12 +30,11 @@ import { IHTTPClient, ILogger } from "../interfaces";
 import { AirtelError } from "./errors";
 import { IAirtelClient, TAirtelConfig, TAirtelKycResponse, TGetKycArgs, TGetTokenArgs, TGetTokenResponse } from "./types";
 
-export const ROUTES = Object.freeze({
+export const AIRTEL_ROUTES = Object.freeze({
     getToken: '/auth/oauth2/token',
-    getKyc: '/standard/v2/users/',
+    getKyc: '/standard/v1/users/',
 
 });
-
 
 
 export class AirtelClient implements IAirtelClient {
@@ -52,51 +51,57 @@ export class AirtelClient implements IAirtelClient {
 
     async getToken(deps: TGetTokenArgs): Promise<TGetTokenResponse> {
         this.logger.info("Getting Access Token from Airtel");
-        const res = await this.httpClient.post<TGetTokenArgs, TGetTokenResponse>(`https://${this.airtelConfig.AIRTEL_BASE_URL}${ROUTES.getToken}`, deps, {
-            headers : this.getDefaultHeader()
-        });
-        if (res.statusCode !== 200) {
-            throw AirtelError.getTokenFailedError();
+        const url = `https://${this.airtelConfig.AIRTEL_BASE_URL}${AIRTEL_ROUTES.getToken}`;
+        this.logger.info(url);
+        try {
+            const res = await this.httpClient.post<TGetTokenArgs, TGetTokenResponse>(url, deps, {
+                headers: this.getDefaultHeader()
+            });
+            if (res.statusCode !== 200) {
+                this.logger.error(`Failed to get token: ${res.statusCode} - ${res.data}`);
+                throw AirtelError.getTokenFailedError();
+            }
+            return res.data;
+        } catch (error) {
+            this.logger.error(`Error getting token: ${error}`, { url, data: deps });
+            throw error;
         }
-        return res.data;
     }
+    
 
 
     async getKyc(deps: TGetKycArgs): Promise<TAirtelKycResponse> {
         this.logger.info("Getting KYC Information");
-        const res = await this.httpClient.get<TAirtelKycResponse>(`https://${this.airtelConfig.AIRTEL_BASE_URL}${ROUTES.getKyc}${deps.msisdn}`, {
+        const res = await this.httpClient.get<TAirtelKycResponse>(`https://${this.airtelConfig.AIRTEL_BASE_URL}${AIRTEL_ROUTES.getKyc}${deps.msisdn}`, {
             headers :{
                 ...this.getDefaultHeader(),
                 'Authorization': `Bearer ${await this.getAuthHeader()}`
             } 
         })
-        if (res.statusCode !== 200) {
+        if (res.data.status.code !== '200') {
             throw AirtelError.getKycError();
         }
         return res.data;
     }
 
+
     private getDefaultHeader(){
         return {
-        'Accept': 'application/json',
+        'Content-Type': 'application/json',
         'X-Country': this.airtelConfig.X_COUNTRY,
         'X-Currency': this.airtelConfig.X_CURRENCY,
-      }
+        }
     }
 
 
     private async getAuthHeader(): Promise<string>{
         const res = await this.getToken({
-            clientSecret: this.airtelConfig.CLIENT_SECRET,
-            clientId: this.airtelConfig.CLIENT_ID,
-            grantType: this.airtelConfig.GRANT_TYPE
+            client_secret: this.airtelConfig.CLIENT_SECRET,
+            client_id: this.airtelConfig.CLIENT_ID,
+            grant_type: this.airtelConfig.GRANT_TYPE
         });
       return res.access_token;
     } 
-
-
-
-
 
 
 }
