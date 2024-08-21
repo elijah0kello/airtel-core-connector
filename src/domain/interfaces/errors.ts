@@ -115,4 +115,11 @@ export class ValidationError extends BasicError {
             httpCode: 500,
         });
     }
+
+    static quoteNotDefinedError(message: string, mlCode: string, httpCode: number){
+        return new ValidationError(message, {
+            mlCode: mlCode,
+            httpCode: httpCode,
+        });
+    }
 }

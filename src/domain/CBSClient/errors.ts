@@ -109,4 +109,11 @@ export class AirtelError extends BasicError{
             mlCode: '5000',
         });
     }
+
+    static disbursmentError() {
+        return new AirtelError("Send Money to Beneficiary Failed", {
+            httpCode: 500,
+            mlCode: '5000',
+        });
+    }
 } 

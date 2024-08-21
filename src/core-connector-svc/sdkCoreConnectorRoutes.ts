@@ -54,6 +54,7 @@ export class CoreConnectorRoutes extends BaseRoutes {
                 getParties: this.getParties.bind(this),
                 quoteRequests: this.quoteRequests.bind(this),
                 transfers: this.transfers.bind(this),
+                updateReceiveTransfer: this.updateTransfers.bind(this),
                 validationFail: async (context, req, h) => h.response({ error: context.validation.errors }).code(412),
                 notFound: async (context, req, h) => h.response({ error: 'Not found' }).code(404),
             },
@@ -119,17 +120,20 @@ export class CoreConnectorRoutes extends BaseRoutes {
         const transfer = request.payload as TtransferRequest;
         try {
             const result = await this.aggregate.receiveTransfer(transfer);
-            return this.handleResponse(result, h, 201);
+            return this.handleResponse(result, h, 200);
         } catch (error: unknown) {
             return this.handleError(error, h);
         }
     }
 
+
     private async updateTransfers(context: Context, request: Request, h: ResponseToolkit) {
         const transfer = request.payload as TtransferPatchNotificationRequest;
         try {
-            const result = await this.aggregate.updateTransfer(transfer);
-            return this.handleResponse(result, h, 201);
+            const { params } = context.request;
+            const transferId = params['transferId'] as string;
+            const result = await this.aggregate.updateTransfer(transfer, transferId);
+            return this.handleResponse(result, h, 200);
         } catch (error: unknown) {
             return this.handleError(error, h);
         }

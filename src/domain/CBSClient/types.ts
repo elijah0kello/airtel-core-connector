@@ -310,7 +310,7 @@ export type TAirtelConfig = {
     SUPPORTED_ID_TYPE: string;
     SERVICE_CHARGE: string;
     EXPIRATION_DURATION: string;
-    
+    AIRTEL_PIN: string;
 }
 
 export type TGetKycArgs = {
@@ -352,7 +352,40 @@ export type TGetTokenResponse = {
     "access_token": string;
     "expires_in": string;
     "token_type": string
-  }
+}
+
+
+export type TAirtelDisbursementRequestBody = {
+    "payee": {
+        "msisdn": string,
+        "wallet_type": string,
+    },
+    "reference": string,
+    "pin": string,
+    "transaction": {
+        "amount":number,
+        "id": string,
+        "type": string
+    }
+}
+
+export type TAirtelDisbursementResponse = {
+    "data": {
+        "transaction": {
+            "reference_id":string,
+            "airtel_money_id": string,
+            "id": string,
+            "status": string,
+            "message": string,
+        }
+    },
+    "status": {
+        "response_code": string,
+        "code": string,
+        "success": boolean,
+        "message": string,
+    }
+}
 
 export interface IAirtelClient {
     airtelConfig: TAirtelConfig;
@@ -360,5 +393,6 @@ export interface IAirtelClient {
     logger: ILogger;
     getKyc(deps: TGetKycArgs): Promise<TAirtelKycResponse>;
     getToken(deps: TGetTokenArgs): Promise<TGetTokenResponse>;
+    sendMoney(deps: TAirtelDisbursementRequestBody): Promise<TAirtelDisbursementResponse>;
 }
 

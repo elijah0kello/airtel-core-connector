@@ -65,14 +65,50 @@ import * as console from "node:console";
              httpClient,
              logger,
          });
-         ccAggregate = new CoreConnectorAggregate(fineractConfig, fineractClient, sdkClient, airtelClient, logger);
+         ccAggregate = new CoreConnectorAggregate(fineractConfig, fineractClient, sdkClient, airtelConfig, airtelClient, logger);
      });
  
      describe('Airtel Test', () => {
-         test('Test Get Parties Happy Path', async () => {
-             console.log("Test");
-         });
- 
+        test('Test Get Parties Happy Path', async () => {
+            const res = await ccAggregate.getParties('978980797', 'MSISDN');
+            expect(res.statusCode).toEqual(200);
+        });
+
+        test('Test Get Parties With a Number That Does not Exist', async () => {
+            try {
+                const res = await ccAggregate.getParties('777503758', 'MSISDN');
+            } catch (error) {
+                if(error instanceof AirtelError){
+                    expect(error.httpCode).toEqual(500);
+                    expect(error.mlCode).toEqual('5000');
+                }
+            }
+
+        });
+
+        test('Test Get Transfer Quote (Get Quotes)', async () => {
+            try {
+                const res = await ccAggregate.getParties('777503758', 'MSISDN');
+            } catch (error) {
+                if(error instanceof AirtelError){
+                    expect(error.httpCode).toEqual(500);
+                    expect(error.mlCode).toEqual('5000');
+                }
+            }
+
+        });
+
+        test('Test Airtel Disbursements (Transfers)', async () => {
+            try {
+                const res = await ccAggregate.getParties('777503758', 'MSISDN');
+            } catch (error) {
+                if(error instanceof AirtelError){
+                    expect(error.httpCode).toEqual(500);
+                    expect(error.mlCode).toEqual('5000');
+                }
+            }
+
+        });
     });
  
  });

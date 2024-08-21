@@ -37,6 +37,8 @@ import {
     TFineractTransferDeps,
     TFineractGetAccountResponse,
     IAirtelClient,
+    TAirtelDisbursementRequestBody,
+    TAirtelConfig,
 } from './CBSClient';
 import {
     ILogger,
@@ -69,6 +71,7 @@ export class CoreConnectorAggregate {
         private readonly fineractConfig: TFineractConfig,
         private readonly fineractClient: IFineractClient,
         private readonly sdkClient: ISDKClient,
+        private readonly airtelConfig: TAirtelConfig,
         private readonly airtelClient: IAirtelClient,
         logger: ILogger,
     ) {
@@ -168,13 +171,43 @@ export class CoreConnectorAggregate {
         return true;
     }
 
-    async updateTransfer(updateTransferPayload: TtransferPatchNotificationRequest): Promise<void>{
+    private validatePatchQuote(transfer: TtransferPatchNotificationRequest): boolean {
+        // todo define implmentation
+        return true;
+    }
+
+    async updateTransfer(updateTransferPayload: TtransferPatchNotificationRequest, transferId: String): Promise<void> {
         this.logger.info('Committing The Transfer');
-        if(updateTransferPayload.currentState !== 'COMPLETED'){
+        if (updateTransferPayload.currentState !== 'COMPLETED') {
             throw ValidationError.transferNotCompletedError();
         }
-        
+        if (!this.validatePatchQuote(updateTransferPayload)) {
+            throw ValidationError.invalidQuoteError();
+        }
+        const airtelDisbursementRequest: TAirtelDisbursementRequestBody = this.getDisbursementRequestBody(updateTransferPayload)
+        await this.airtelClient.sendMoney(airtelDisbursementRequest);
     }
+
+    
+    private getDisbursementRequestBody(requestBody: TtransferPatchNotificationRequest): TAirtelDisbursementRequestBody {
+        if(!requestBody.quoteRequest){
+            throw ValidationError.quoteNotDefinedError('Quote Not Defined Error', '5000', 500);
+        }
+        return {
+            "payee": {
+                "msisdn": requestBody.quoteRequest.body.payee.partyIdInfo.partyIdentifier,
+                "wallet_type": "NORMAL"
+            },
+            "reference": requestBody.quoteRequest.body.transactionId,
+            "pin": this.airtelConfig.AIRTEL_PIN,
+            "transaction": {
+                "amount": Number(requestBody.quoteRequest.body.amount),
+                "id": requestBody.quoteRequest.body.transactionId,
+                "type": "B2C"
+            }
+        }
+    }
+
 
     async sendTransfer(transfer: TFineractOutboundTransferRequest): Promise<TFineractOutboundTransferResponse> {
         this.logger.info(`Transfer from fineract account with ID${transfer.from.fineractAccountId}`);

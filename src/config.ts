@@ -177,7 +177,14 @@ const config = Convict<IConfigSchema>({
             default: null, // required
             env: 'EXPIRATION_DURATION',
         },
-    }
+
+        AIRTEL_PIN: {
+            doc: 'Airtel Pin for Disbursements',
+            format: String,
+            default: null, // required
+            env: 'AIRTEL_PIN',
+        },
+    },
 });
 
 config.validate({ allowed: 'strict' });
