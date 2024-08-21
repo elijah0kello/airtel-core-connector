@@ -108,4 +108,18 @@ export class ValidationError extends BasicError {
             httpCode: 400,
         });
     }
+
+    static transferNotCompletedError(){
+        return new ValidationError("Transfer Not Completed Error", {
+            mlCode: '5000',
+            httpCode: 500,
+        });
+    }
+
+    static quoteNotDefinedError(message: string, mlCode: string, httpCode: number){
+        return new ValidationError(message, {
+            mlCode: mlCode,
+            httpCode: httpCode,
+        });
+    }
 }

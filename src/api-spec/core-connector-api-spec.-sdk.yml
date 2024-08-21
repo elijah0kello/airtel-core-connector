@@ -3,7 +3,7 @@ info:
     title: Mifos Core Connector for Mojaloop Connector Backend API
     version: 0.0.1
     description: >
-        API Specification for the Mifos Core Connector from the SDK Scheme Adapter
+        API Specification for the Airtel Core Connector from the SDK Scheme Adapter
 
         This API is to be implemented by the DFSP
     license:
@@ -15,8 +15,8 @@ paths:
         get:
             tags:
                 - Get Parties
-            summary: Perform Account Lookup in Fineract.
-            description: Lookup a party from a remote fineract instance from IBAN
+            summary: Perform Account Lookup in Airtel.
+            description: Lookup a party from a remote airtel instance from IBAN
             operationId: getParties
             parameters:
                 - name: ID
@@ -37,7 +37,7 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/PartyInfo'
                 '404':
-                    description: 'Party with IBAN does not exist in fineract'
+                    description: 'Party with MSISDN does not exist in fineract'
                 '500':
                     description: 'Internal Server Error'
 
@@ -45,8 +45,8 @@ paths:
         post:
             tags:
                 - Quote Requests
-            summary: Request a quote from fineract for a specified receiveTransfer
-            description: Request a quote for a transaction in fineract
+            summary: Request a quote from airtel for a specified receiveTransfer
+            description: Request a quote for a transaction in airtel
             operationId: quoteRequests
             requestBody:
                 content:
@@ -69,7 +69,7 @@ paths:
         post:
             tags:
                 - Transfer Request
-            summary: Request to make a receiveTransfer from an account from a mojaloop scheme to a fineract account
+            summary: Request to make a receiveTransfer from an account from a mojaloop scheme to a airtel account
             description: Request to make a receiveTransfer
             operationId: transfers
             requestBody:
