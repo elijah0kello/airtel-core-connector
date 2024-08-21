@@ -2,6 +2,7 @@
 sequenceDiagram
   autoNumber
   ML Integration Service->>CC: POST /send-money/ {}
+  CC->>CC: Check Request
   Alt if Checks fail
   CC-->>ML Integration Service: Response 400
   End
