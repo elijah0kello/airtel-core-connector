@@ -7,7 +7,7 @@ sequenceDiagram
   CC-->>ML Integration Service: Response 500 OK
   End
   CC->>Airtel:POST /merchant/v2/payments
-  Airtel-->CC:Response
+  Airtel-->>CC:Response
   CC-->CC: Check Response
   Alt If Couldnt make reservation
   CC-->>ML Integration Service: Response 500
