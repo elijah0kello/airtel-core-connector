@@ -21,18 +21,21 @@
 
 
  - Kasweka Michael Mukoko <kaswekamukoko@gmail.com>
+ - Niza Tembo <mcwayzj@gmail.com>
 
  --------------
  ******/
 
 import { IHTTPClient, ILogger } from "../interfaces";
 import { AirtelError } from "./errors";
-import { IAirtelClient, TAirtelConfig, TAirtelDisbursementRequestBody, TAirtelDisbursementResponse, TAirtelKycResponse, TGetKycArgs, TGetTokenArgs, TGetTokenResponse } from "./types";
+import { IAirtelClient, TAirtelCollectMoneyRequest, TAirtelCollectMoneyResponse, TAirtelConfig, TAirtelDisbursementRequestBody, TAirtelDisbursementResponse, TAirtelKycResponse, TAirtelRefundMoneyRequest, TAirtelRefundMoneyResponse, TGetKycArgs, TGetTokenArgs, TGetTokenResponse } from "./types";
 
 export const AIRTEL_ROUTES = Object.freeze({
     getToken: '/auth/oauth2/token',
     getKyc: '/standard/v1/users/',
     sendMoney: '/standard/v3/disbursements',
+    collectMoney: 'merchant/v2/payments/',
+    refundMoney: '/standard/v2/payments/refund',
 });
 
 
@@ -45,6 +48,51 @@ export class AirtelClient implements IAirtelClient {
         this.airtelConfig = airtelConfig;
         this.httpClient = httpClient;
         this.logger = logger;
+    }
+
+
+    async refundMoney(deps: TAirtelRefundMoneyRequest): Promise<TAirtelRefundMoneyResponse> {
+        this.logger.info("Refunding Money to Customer in Airtel");
+        const url = `https://${this.airtelConfig.AIRTEL_BASE_URL}${AIRTEL_ROUTES.refundMoney}`;
+
+        try{
+            const res = await this.httpClient.post<TAirtelRefundMoneyRequest,TAirtelRefundMoneyResponse>(url, deps,{
+                headers: {
+                    ...this.getDefaultHeader(),
+                    'Authorization': `Bearer ${await this.getAuthHeader()}`,
+                }
+            });
+            if (res.data.status.code !== '200') {
+                throw AirtelError.refundMoneyError();
+            }
+            return res.data;
+        }catch(error){
+            this.logger.error(`Error Refunding Money: ${error}`, { url, data: deps });
+            throw error;
+        }
+    }
+
+
+    async collectMoney(deps: TAirtelCollectMoneyRequest): Promise<TAirtelCollectMoneyResponse> {
+        this.logger.info("Collecting Money from Airtel");
+        const url = `https://${this.airtelConfig.AIRTEL_BASE_URL}${AIRTEL_ROUTES.collectMoney}`;
+
+        try {
+            const res = await this.httpClient.post<TAirtelCollectMoneyRequest, TAirtelCollectMoneyResponse>(url, deps, {
+                headers: {
+                    ...this.getDefaultHeader(),
+                    'Authorization': `Bearer ${await this.getAuthHeader()}`,
+                }
+            });
+            if (res.data.status.code !== '200') {
+                throw AirtelError.collectMoneyError();
+            }
+            return res.data;
+            
+        }catch(error){
+            this.logger.error(`Error Collecting Money: ${error}`, { url, data: deps });
+            throw error;
+        }
     }
 
 
@@ -99,7 +147,7 @@ export class AirtelClient implements IAirtelClient {
                 ...this.getDefaultHeader(),
                 'Authorization': `Bearer ${await this.getAuthHeader()}`
             }
-        })
+        });
         if (res.data.status.code !== '200') {
             throw AirtelError.getKycError();
         }
@@ -112,7 +160,7 @@ export class AirtelClient implements IAirtelClient {
             'Content-Type': 'application/json',
             'X-Country': this.airtelConfig.X_COUNTRY,
             'X-Currency': this.airtelConfig.X_CURRENCY,
-        }
+        };
     }
 
 
