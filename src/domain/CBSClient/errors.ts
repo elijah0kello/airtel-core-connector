@@ -21,6 +21,8 @@
 
 
  - Okello Ivan Elijah <elijahokello90@gmail.com>
+- Kasweka Michael Mukoko <kaswekamukoko@gmail.com>
+ - Niza Tembo <mcwayzj@gmail.com>
 
  --------------
  ******/
@@ -114,6 +116,18 @@ export class AirtelError extends BasicError{
         return new AirtelError("Send Money to Beneficiary Failed", {
             httpCode: 500,
             mlCode: '5000',
+        });
+    }
+    static collectMoneyError() {
+        return new AirtelError("Collect Money from Airtel Failed", {
+            httpCode: 500,
+            mlCode: '4000',
+        });
+    }
+    static refundMoneyError() {
+        return new AirtelError("Refund Money to Airtel Customer Failed", {
+            httpCode: 500,
+            mlCode: '4000',
         });
     }
 } 

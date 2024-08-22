@@ -26,25 +26,16 @@
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
 
-import { CoreConnectorAggregate, TtransferRequest, ValidationError } from '../../../src/domain';
-import { AirtelClientFactory, AirtelError, FineractClientFactory, FineractError, IAirtelClient, IFineractClient } from '../../../src/domain/CBSClient';
+import { CoreConnectorAggregate, } from '../../../src/domain';
+import { AirtelClientFactory, FineractClientFactory, IAirtelClient, IFineractClient } from '../../../src/domain/CBSClient';
 import {
     ISDKClient,
-    SDKClientError,
     SDKClientFactory,
-    TFineractOutboundTransferRequest,
 } from '../../../src/domain/SDKClient';
 import { AxiosClientFactory } from '../../../src/infra/axiosHttpClient';
 import { loggerFactory } from '../../../src/infra/logger';
 import config from '../../../src/config';
-import * as fixtures from '../../fixtures';
-import * as crypto from 'node:crypto';
-import { randomUUID } from 'crypto';
-import {
-    fineractCalculateWithdrawQuoteResponseDto,
-    fineractGetSavingsAccountResponseDto,
-    sdkInitiateTransferResponseDto,
-} from '../../fixtures';
+
 
 const mockAxios = new MockAdapter(axios);
 const logger = loggerFactory({ context: 'ccAgg tests' });
@@ -74,7 +65,7 @@ describe('CoreConnectorAggregate Tests -->', () => {
             httpClient,
             logger,
         });
-        ccAggregate = new CoreConnectorAggregate(fineractConfig, fineractClient, sdkClient, airtelClient, logger);
+        ccAggregate = new CoreConnectorAggregate(fineractConfig, fineractClient, sdkClient, airtelConfig, airtelClient, logger);
     });
 
     describe('Airtel Test', () => {

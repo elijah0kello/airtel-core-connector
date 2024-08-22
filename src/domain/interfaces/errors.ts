@@ -21,6 +21,8 @@
 
 
  - Okello Ivan Elijah <elijahokello90@gmail.com>
+- Kasweka Michael Mukoko <kaswekamukoko@gmail.com>
+ - Niza Tembo <mcwayzj@gmail.com>
 
  --------------
  ******/
@@ -109,6 +111,14 @@ export class ValidationError extends BasicError {
         });
     }
 
+
+    static invalidReturnedQuoteError(){
+        return new ValidationError("Invalid Quote Error", {
+            mlCode: '5101',
+            httpCode: 500,
+        });
+    }
+
     static transferNotCompletedError(){
         return new ValidationError("Transfer Not Completed Error", {
             mlCode: '5000',
@@ -120,6 +130,33 @@ export class ValidationError extends BasicError {
         return new ValidationError(message, {
             mlCode: mlCode,
             httpCode: httpCode,
+        });
+    }
+
+    static invalidConversionQuoteError(message: string, mlCode: string, httpCode: number){
+        return new ValidationError(message, {
+            mlCode: mlCode,
+            httpCode: httpCode,
+        });
+    }
+
+    static transferIdNotDefinedError(message: string, mlCode: string, httpCode: number){
+        return new ValidationError(message, {
+            mlCode: mlCode,
+            httpCode: httpCode,
+        });
+    }
+
+    static notEnoughInformationError(){
+        return new ValidationError("Transfer Not Completed Error", {
+            mlCode: '4000',
+            httpCode: 500,
+        });
+    }
+    static quoteNotAcceptedError(){
+        return new ValidationError("Payer rejected transaction request", {
+            mlCode: '4101',
+            httpCode: 500,
         });
     }
 }
