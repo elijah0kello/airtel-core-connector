@@ -19,7 +19,7 @@ CC->>CC: Check Respomse
 Alt if Response not Successful
 CC-->>ML Connector: Response 500 ML Code: 5000
 End
-Alt if Account is bad
+Alt if Account is barred
 CC-->>ML Connector:Response 500: Ml Code :5107
 End
 CC-->>ML Connector: Repsonse 200
