@@ -46,6 +46,8 @@ paths:
       description: >- 
         The Endpoint used by the DFSP Operations application to initiate send money 
         requests to the mojaloop connector
+
+      operationId: sendMoney
       requestBody:
         description: Send Money request body
         content:
@@ -76,6 +78,7 @@ paths:
   /send-money/{id}:
     put:
       summary: Confirm send money
+      operationId: updateSendMoney
       parameters:
         - name: id
           in: path
@@ -196,7 +199,6 @@ components:
           example: "9876543210"
         dateOfBirth:
           type: string
-          format: date
           example: "1985-04-12"
         geoLocationData:
           description: >-
@@ -307,7 +309,6 @@ components:
           example: "9876543210"
         dateOfBirth:
           type: string
-          format: date
           example: "1985-04-12"  
     ConfirmSendMoney:
       type: object

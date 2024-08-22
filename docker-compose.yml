@@ -5,8 +5,8 @@ networks:
 
 
 services:
-  mifos-core-connector:
-    image: mojaloop/mifos-core-connector:latest
+  airtel-core-connector:
+    image: mojaloop/airtel-core-connector:latest
     build:
       context: .
     networks:

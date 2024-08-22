@@ -41,7 +41,7 @@ import { AirtelClientFactory, FineractClientFactory} from '../domain/CBSClient';
 import { SDKClientFactory } from '../domain/SDKClient';
 import { DFSPCoreConnectorRoutes } from './dfspCoreConnectorRoutes';
 
-export const logger = loggerFactory({ context: 'MifosCC' });
+export const logger = loggerFactory({ context: 'Airtel CC' });
 
 export class Service {
     static coreConnectorAggregate: CoreConnectorAggregate;
