@@ -40,6 +40,7 @@ import {
     TAirtelConfig,
     TAirtelUpdateSendMoneyRequest,
     TAirtelCollectMoneyRequest,
+    AirtelError,
 } from './CBSClient';
 import {
     ILogger,
@@ -114,6 +115,15 @@ export class CoreConnectorAggregate {
 
         if (quoteRequest.currency !== config.get("airtel.X_CURRENCY")) {
             throw ValidationError.unsupportedCurrencyError();
+        }
+
+        const res = await this.airtelClient.getKyc({
+            msisdn: quoteRequest.to.idValue,
+        
+        });
+
+        if(res.data.is_barred){
+            throw AirtelError.payeeBlockedError("Account is barred", 500, "5400");
         }
 
         const serviceCharge = config.get("airtel.SERVICE_CHARGE");

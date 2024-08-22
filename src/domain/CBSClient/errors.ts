@@ -130,4 +130,10 @@ export class AirtelError extends BasicError{
             mlCode: '4000',
         });
     }
+    static payeeBlockedError(message: string, httpCode:number, mlCode:string) {
+        return new AirtelError(message, {
+            httpCode: httpCode,
+            mlCode: mlCode,
+        });
+    }
 } 
