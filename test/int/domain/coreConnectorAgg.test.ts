@@ -35,6 +35,9 @@
  import { loggerFactory } from '../../../src/infra/logger';
  import config from '../../../src/config';
 import * as console from "node:console";
+import {
+    transferPatchNotificationRequestDto
+} from '../../fixtures';
 
  
  // const mockAxios = new MockAdapter(axios);
@@ -98,9 +101,21 @@ import * as console from "node:console";
 
         });
 
-        test('Test Airtel Disbursements (Transfers)', async () => {
+        test('Test Airtel Disbursements (Transfers - Happy Path)', async () => {
             try {
-                const res = await ccAggregate.getParties('777503758', 'MSISDN');
+                const res = await ccAggregate.updateTransfer(transferPatchNotificationRequestDto, '47e8a9cd-3d89-55c5-a15a-b57a28ad763e');
+            } catch (error) {
+                if(error instanceof AirtelError){
+                    expect(error.httpCode).toEqual(500);
+                    expect(error.mlCode).toEqual('5000');
+                }
+            }
+
+        });
+
+        test('Test Airtel Disbursements (Transfers - Unhappy Path)', async () => {
+            try {
+                const res = await ccAggregate.updateTransfer(transferPatchNotificationRequestDto, '47e8a9cd-3d89-55c5-a15a-b57a28ad763e');
             } catch (error) {
                 if(error instanceof AirtelError){
                     expect(error.httpCode).toEqual(500);

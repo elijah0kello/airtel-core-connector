@@ -74,7 +74,7 @@ describe('CoreConnectorAggregate Tests -->', () => {
             httpClient,
             logger,
         });
-        ccAggregate = new CoreConnectorAggregate(fineractConfig, fineractClient, sdkClient, airtelClient, logger);
+        ccAggregate = new CoreConnectorAggregate(fineractConfig, fineractClient, sdkClient, airtelConfig, airtelClient, logger);
     });
 
     describe('Airtel Test', () => {
