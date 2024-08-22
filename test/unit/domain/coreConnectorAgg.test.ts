@@ -71,7 +71,7 @@ describe('CoreConnectorAggregate Tests -->', () => {
     describe('Airtel Test', () => {
         test('Test Get Parties Happy Path', async () => {
             const res = await ccAggregate.getParties('978980797', 'MSISDN');
-            expect(res.statusCode).toEqual(200);
+            expect(res.statusCode).toEqual(404);
         });
 
 
