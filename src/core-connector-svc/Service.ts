@@ -21,6 +21,8 @@ optionally within square brackets <email>.
 
 
 - Okello Ivan Elijah <elijahokello90@gmail.com>
+- Kasweka Michael Mukoko <kaswekamukoko@gmail.com>
+- Niza Tembo <mcwayzj@gmail.com>
 
 --------------
 ******/
@@ -68,7 +70,7 @@ export class Service {
             httpClient,
             config.get('sdkSchemeAdapter.SDK_BASE_URL'),
         );
-        this.coreConnectorAggregate = new CoreConnectorAggregate(fineractConfig, fineractClient, sdkClient, airtelClient, logger);
+        this.coreConnectorAggregate = new CoreConnectorAggregate(fineractConfig, fineractClient, sdkClient,airtelConfig,  airtelClient, logger);
 
         await this.setupAndStartUpServer();
         logger.info('Core Connector Server started');

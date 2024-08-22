@@ -34,10 +34,6 @@
  import { AxiosClientFactory } from '../../../src/infra/axiosHttpClient';
  import { loggerFactory } from '../../../src/infra/logger';
  import config from '../../../src/config';
-import * as console from "node:console";
-import {
-    transferPatchNotificationRequestDto
-} from '../../fixtures';
 
  
  // const mockAxios = new MockAdapter(axios);

@@ -21,6 +21,8 @@
 
 
  - Okello Ivan Elijah <elijahokello90@gmail.com>
+- Kasweka Michael Mukoko <kaswekamukoko@gmail.com>
+ - Niza Tembo <mcwayzj@gmail.com>
 
  --------------
  ******/
@@ -30,15 +32,14 @@
 import { randomUUID } from 'crypto';
 import {
     IFineractClient,
-    IdType,
     PartyType,
     TFineractConfig,
-    TFineractTransactionPayload,
     TFineractTransferDeps,
-    TFineractGetAccountResponse,
     IAirtelClient,
     TAirtelDisbursementRequestBody,
     TAirtelConfig,
+    TAirtelUpdateSendMoneyRequest,
+    TAirtelCollectMoneyRequest,
 } from './CBSClient';
 import {
     ILogger,
@@ -49,17 +50,19 @@ import {
     TtransferRequest,
     ValidationError,
     TtransferPatchNotificationRequest,
+    THttpResponse,
 } from './interfaces';
 import {
     ISDKClient,
     SDKClientError,
-    TFineractOutboundTransferRequest,
-    TFineractOutboundTransferResponse,
     TSDKOutboundTransferRequest,
+    TSDKOutboundTransferResponse,
     TtransferContinuationResponse,
-    TUpdateTransferDeps,
 } from './SDKClient';
-import { FineractError } from './CBSClient';
+import {
+    TAirtelSendMoneyRequest,
+    TAirtelSendMoneyResponse,
+} from './CBSClient';
 import config from '../config';
 
 export class CoreConnectorAggregate {
@@ -113,12 +116,12 @@ export class CoreConnectorAggregate {
             throw ValidationError.unsupportedCurrencyError();
         }
 
-        const serviceCharge = config.get("airtel.SERVICE_CHARGE")
+        const serviceCharge = config.get("airtel.SERVICE_CHARGE");
 
         this.checkAccountBarred(quoteRequest.to.idValue);
 
-        const quoteExpiration = config.get("airtel.EXPIRATION_DURATION")
-        const expiration = new Date()
+        const quoteExpiration = config.get("airtel.EXPIRATION_DURATION");
+        const expiration = new Date();
         expiration.setHours(expiration.getHours() + Number(quoteExpiration));
         const expirationJSON = expiration.toJSON();
 
@@ -168,29 +171,31 @@ export class CoreConnectorAggregate {
 
     private validateQuote(transfer: TtransferRequest): boolean {
         // todo define implmentation
+        this.logger.info(`Validating code for transfer with amount ${transfer.amount}`);
         return true;
     }
 
     private validatePatchQuote(transfer: TtransferPatchNotificationRequest): boolean {
+        this.logger.info(`Validating code for transfer with state ${transfer.currentState}`);
         // todo define implmentation
         return true;
     }
 
-    async updateTransfer(updateTransferPayload: TtransferPatchNotificationRequest, transferId: String): Promise<void> {
-        this.logger.info('Committing The Transfer');
+    async updateTransfer(updateTransferPayload: TtransferPatchNotificationRequest, transferId: string): Promise<void> {
+        this.logger.info(`Committing The Transfer with id ${transferId}`);
         if (updateTransferPayload.currentState !== 'COMPLETED') {
             throw ValidationError.transferNotCompletedError();
         }
         if (!this.validatePatchQuote(updateTransferPayload)) {
             throw ValidationError.invalidQuoteError();
         }
-        const airtelDisbursementRequest: TAirtelDisbursementRequestBody = this.getDisbursementRequestBody(updateTransferPayload)
+        const airtelDisbursementRequest: TAirtelDisbursementRequestBody = this.getDisbursementRequestBody(updateTransferPayload);
         await this.airtelClient.sendMoney(airtelDisbursementRequest);
     }
 
-    
+
     private getDisbursementRequestBody(requestBody: TtransferPatchNotificationRequest): TAirtelDisbursementRequestBody {
-        if(!requestBody.quoteRequest){
+        if (!requestBody.quoteRequest) {
             throw ValidationError.quoteNotDefinedError('Quote Not Defined Error', '5000', 500);
         }
         return {
@@ -205,148 +210,138 @@ export class CoreConnectorAggregate {
                 "id": requestBody.quoteRequest.body.transactionId,
                 "type": "B2C"
             }
-        }
-    }
-
-
-    async sendTransfer(transfer: TFineractOutboundTransferRequest): Promise<TFineractOutboundTransferResponse> {
-        this.logger.info(`Transfer from fineract account with ID${transfer.from.fineractAccountId}`);
-        const accountData = await this.getSavingsAccount(transfer.from.fineractAccountId);
-        if (accountData.subStatus.blockCredit || accountData.subStatus.blockDebit) {
-            const errMessage = 'Account blocked from credit or debit';
-            this.logger.warn(errMessage, accountData);
-            throw FineractError.accountDebitOrCreditBlockedError(errMessage);
-        }
-        const sdkOutboundTransfer: TSDKOutboundTransferRequest = this.getSDKTransferRequest(transfer);
-        const transferRes = await this.sdkClient.initiateTransfer(sdkOutboundTransfer);
-        if (
-            !transferRes.data.quoteResponse ||
-            !transferRes.data.quoteResponse.body.payeeFspCommission ||
-            !transferRes.data.quoteResponse.body.payeeFspFee
-        ) {
-            throw SDKClientError.noQuoteReturnedError();
-        }
-        const totalFineractFee = await this.fineractClient.calculateWithdrawQuote({
-            amount: this.getAmountSum([
-                parseFloat(transferRes.data.amount),
-                parseFloat(transferRes.data.quoteResponse.body.payeeFspFee.amount),
-                parseFloat(transferRes.data.quoteResponse.body.payeeFspCommission.amount),
-            ]),
-        });
-        if (!this.checkAccountBalance(totalFineractFee.feeAmount, accountData.summary.availableBalance)) {
-            this.logger.warn('Payer account does not have sufficient funds for transfer', accountData);
-            throw FineractError.accountInsufficientBalanceError();
-        }
-
-        return {
-            totalAmountFromFineract: totalFineractFee.feeAmount,
-            transferResponse: transferRes.data,
         };
     }
 
-    async updateSentTransfer(transferAccept: TUpdateTransferDeps): Promise<TtransferContinuationResponse> {
-        this.logger.info(
-            `Continuing transfer with id ${transferAccept.sdkTransferId} and account with id ${transferAccept.fineractTransaction.fineractAccountId}`,
-        );
-        let transaction: TFineractTransferDeps | null = null;
 
-        try {
-            transaction = await this.getTransaction(transferAccept);
-            const withdrawRes = await this.fineractClient.sendTransfer(transaction);
-            if (withdrawRes.statusCode != 200) {
-                throw FineractError.withdrawFailedError(`Withdraw failed with status code ${withdrawRes.statusCode}`);
+    async sendTransfer(transfer: TAirtelSendMoneyRequest): Promise<TAirtelSendMoneyResponse> {
+        this.logger.info(`Transfer from airtel account with ID${transfer.payerAccount}`);
+
+        const transferRequest: TSDKOutboundTransferRequest = this.getTSDKOutboundTransferRequest(transfer);
+        const res = await this.sdkClient.initiateTransfer(transferRequest);
+        let acceptRes: THttpResponse<TtransferContinuationResponse>;
+
+        if (res.data.currentState === 'WAITING_FOR_CONVERSION_ACCEPTANCE') {
+            if (!this.validateConversionTerms(res.data)) {
+                if (!res.data.transferId) {
+                    throw ValidationError.transferIdNotDefinedError("Transfer Id not defined in transfer response", "4000", 500);
+                }
+
+                acceptRes = await this.sdkClient.updateTransfer({
+                    "acceptConversion": false
+                }, res.data.transferId);
+                throw ValidationError.invalidConversionQuoteError("Recieved Conversion Terms are invalid", "4000", 500);
+            }
+            else {
+                if (!res.data.transferId) {
+                    throw ValidationError.transferIdNotDefinedError("Transfer Id not defined in transfer response", "4000", 500);
+                }
+                acceptRes = await this.sdkClient.updateTransfer({
+                    "acceptConversion": true
+                }, res.data.transferId);
             }
 
-            const updateTransferRes = await this.sdkClient.updateTransfer(
-                { acceptQuote: true },
-                transferAccept.sdkTransferId as number,
-            );
+            if (!this.validateReturnedQuote(acceptRes.data)) {
+                throw ValidationError.invalidReturnedQuoteError();
+            }
 
-            return updateTransferRes.data;
-        } catch (error: unknown) {
-            if (transaction) return await this.processUpdateSentTransferError(error, transaction);
-            throw error;
+            return this.getTAirtelSendMoneyResponse(acceptRes.data);
         }
-    }
-
-    extractAccountFromIBAN(IBAN: string): string {
-        // todo: think how to validate account numbers
-        const accountNo = IBAN.slice(
-            this.fineractConfig.FINERACT_BANK_COUNTRY_CODE.length +
-            this.fineractConfig.FINERACT_CHECK_DIGITS.length +
-            this.fineractConfig.FINERACT_BANK_ID.length +
-            this.fineractConfig.FINERACT_ACCOUNT_PREFIX.length,
-        );
-        this.logger.debug('extracted account number from IBAN:', { accountNo, IBAN });
-        if (accountNo.length < 1) {
-            throw ValidationError.invalidAccountNumberError();
+        if (!this.validateReturnedQuote(res.data)) {
+            throw ValidationError.invalidReturnedQuoteError();
         }
 
-        return accountNo;
+        return this.getTAirtelSendMoneyResponse(res.data);
+
     }
 
-    private getSDKTransferRequest(transfer: TFineractOutboundTransferRequest): TSDKOutboundTransferRequest {
+    private getTSDKOutboundTransferRequest(transfer: TAirtelSendMoneyRequest): TSDKOutboundTransferRequest {
         return {
-            homeTransactionId: transfer.homeTransactionId,
-            from: transfer.from.payer,
-            to: transfer.to,
-            amountType: transfer.amountType,
-            currency: transfer.currency,
-            amount: transfer.amount,
-            transactionType: transfer.transactionType,
-            subScenario: transfer.subScenario,
-            note: transfer.note,
-            quoteRequestExtensions: transfer.quoteRequestExtensions,
-            transferRequestExtensions: transfer.transferRequestExtensions,
-            skipPartyLookup: transfer.skipPartyLookup,
-        };
-    }
-
-    private getAmountSum(amounts: number[]): number {
-        let sum = 0;
-        for (const amount of amounts) {
-            sum = amount + sum;
-        }
-        return sum;
-    }
-
-    private checkAccountBalance(totalAmount: number, accountBalance: number): boolean {
-        return accountBalance > totalAmount;
-    }
-
-    private async getSavingsAccount(accountId: number): Promise<TFineractGetAccountResponse> {
-        this.logger.debug('getting active savingsAccount...', { accountId });
-        const account = await this.fineractClient.getSavingsAccount(accountId);
-
-        if (!account.data.status.active) {
-            throw ValidationError.accountVerificationError();
-        }
-
-        return account.data;
-    }
-
-    private async getTransaction(transferAccept: TUpdateTransferDeps): Promise<TFineractTransferDeps> {
-        this.logger.info('Getting fineract transaction');
-        const accountRes = await this.fineractClient.getSavingsAccount(
-            transferAccept.fineractTransaction.fineractAccountId,
-        );
-
-        const date = new Date();
-        return {
-            accountId: transferAccept.fineractTransaction.fineractAccountId,
-            transaction: {
-                locale: this.fineractConfig.FINERACT_LOCALE,
-                dateFormat: this.DATE_FORMAT,
-                transactionDate: `${date.getDate()} ${date.getMonth() + 1} ${date.getFullYear()}`,
-                transactionAmount: transferAccept.fineractTransaction.totalAmount.toString(),
-                paymentTypeId: this.fineractConfig.FINERACT_PAYMENT_TYPE_ID,
-                accountNumber: accountRes.data.accountNo,
-                routingCode: transferAccept.fineractTransaction.routingCode,
-                receiptNumber: transferAccept.fineractTransaction.receiptNumber,
-                bankNumber: transferAccept.fineractTransaction.bankNumber,
+            'homeTransactionId': randomUUID(),
+            'from': {
+                'idType': this.airtelConfig.SUPPORTED_ID_TYPE,
+                'idValue': transfer.payerAccount
             },
+            'to': {
+                'idType': transfer.payeeIdType,
+                'idValue': transfer.payeeId
+            },
+            'amountType': 'SEND',
+            'currency': transfer.sendCurrency,
+            'amount': transfer.sendAmount,
+            'transactionType': transfer.transactionType,
         };
     }
+
+    private getTAirtelSendMoneyResponse(transfer: TSDKOutboundTransferResponse): TAirtelSendMoneyResponse {
+        if (!(transfer.to.kycInformation) || !(transfer.quoteResponse) || !(transfer.fxQuotesResponse) || !(transfer.quoteResponse?.body.payeeReceiveAmount) || !(transfer.quoteResponse?.body.payeeFspFee) || !(transfer.transferId)) {
+            throw ValidationError.notEnoughInformationError();
+        }
+        return {
+            "payeeDetails": transfer.to.kycInformation,
+            "receiveAmount": transfer.quoteResponse?.body.payeeReceiveAmount?.amount,
+            "receiveCurrency": transfer.fxQuotesResponse?.body.conversionTerms.targetAmount.currency,
+            "fees": transfer.quoteResponse?.body.payeeFspFee?.amount,
+            "feeCurrency": transfer.fxQuotesResponse?.body.conversionTerms.targetAmount.currency,
+            "transactionId": transfer.transferId,
+        };
+    }
+
+    private validateConversionTerms(transferResponse: TSDKOutboundTransferResponse): boolean {
+        this.logger.info(`Validating Conversion Terms with transfer response amount${transferResponse.amount}`);
+        // todo: Define Implementations
+        return true;
+    }
+
+    private validateReturnedQuote(transferResponse: TSDKOutboundTransferResponse): boolean {
+        this.logger.info(`Validating Retunred Quote with transfer response amount${transferResponse.amount}`);
+        // todo: Define Implementations
+        return true;
+    }
+
+    async updateSentTransfer(transferAccept: TAirtelUpdateSendMoneyRequest, transferId: string): Promise<TtransferContinuationResponse> {
+        this.logger.info(`Updating transfer for id ${transferAccept.msisdn}`);
+
+        if (!(transferAccept.acceptQuote)) {
+            throw ValidationError.quoteNotAcceptedError();
+        }
+
+        const airtelRes = await this.airtelClient.collectMoney(this.getTAirtelCollectMoneyRequest(transferAccept, transferId));
+        const sdkRes = await this.sdkClient.updateTransfer({
+            acceptQuote: transferAccept.acceptQuote
+        }, transferId);
+
+        if(!(sdkRes.data.currentState === "COMPLETED")){
+            await this.airtelClient.refundMoney({
+                "transaction": {
+                    "airtel_money_id": airtelRes.data.transaction.id,
+                }
+            });
+
+            // todo: Define manual refund process
+        }
+
+        return sdkRes.data;
+    }
+
+    private getTAirtelCollectMoneyRequest(collection: TAirtelUpdateSendMoneyRequest, transferId: string): TAirtelCollectMoneyRequest {
+        return {
+            "reference": "string",
+            "subscriber": {
+                "country": this.airtelConfig.X_COUNTRY,
+                "currency": this.airtelConfig.X_CURRENCY,
+                "msisdn": collection.msisdn,
+            },
+            "transaction": {
+                "amount": collection.amount,
+                "country": this.airtelConfig.X_COUNTRY,
+                "currency": this.airtelConfig.X_CURRENCY,
+                "id": transferId,
+            }
+        };
+    }
+
+
 
     // think of better way to handle refunding
     private async processUpdateSentTransferError(error: unknown, transaction: TFineractTransferDeps): Promise<never> {

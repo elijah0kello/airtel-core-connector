@@ -28,7 +28,7 @@
 
 import { SDKSchemeAdapter } from '@mojaloop/api-snippets';
 import { IHTTPClient, ILogger, THttpResponse } from '../interfaces';
-import { components } from '@mojaloop/api-snippets/lib/sdk-scheme-adapter/v2_0_0/outbound/openapi';
+import { components } from '@mojaloop/api-snippets/lib/sdk-scheme-adapter/v2_1_0/outbound/openapi';
 
 export type TSDKSchemeAdapterConfig = {
     SDK_BASE_URL: string;
@@ -39,20 +39,6 @@ export type TFineractTransferParty = {
     payer: components['schemas']['transferParty'];
 };
 
-export type TFineractOutboundTransferRequest = {
-    homeTransactionId: string;
-    from: TFineractTransferParty;
-    to: components['schemas']['transferParty'];
-    amountType: components['schemas']['AmountType'];
-    currency: components['schemas']['Currency'];
-    amount: components['schemas']['Amount'];
-    transactionType: components['schemas']['transferTransactionType'];
-    subScenario?: components['schemas']['TransactionSubScenario'];
-    note?: components['schemas']['Note'];
-    quoteRequestExtensions?: components['schemas']['extensionListEmptiable'];
-    transferRequestExtensions?: components['schemas']['extensionListEmptiable'];
-    skipPartyLookup?: boolean;
-};
 
 export type TSDKOutboundTransferRequest = {
     /** @description Transaction ID from the DFSP backend, used to reconcile transactions between the Switch and DFSP backend systems. */
@@ -71,7 +57,45 @@ export type TSDKOutboundTransferRequest = {
     skipPartyLookup?: boolean;
 };
 
-export type TSDKOutboundTransferResponse = SDKSchemeAdapter.V2_0_0.Outbound.Types.transferResponse;
+export type TSDKOutboundTransferResponse = {
+            transferId?: components["schemas"]["CorrelationId"];
+            /** @description Transaction ID from the DFSP backend, used to reconcile transactions between the Switch and DFSP backend systems. */
+            homeTransactionId: string;
+            from: components["schemas"]["transferParty"];
+            to: components["schemas"]["transferParty"];
+            amountType: components["schemas"]["AmountType"];
+            currency: components["schemas"]["Currency"];
+            amount: components["schemas"]["Amount"];
+            transactionType: components["schemas"]["transferTransactionType"];
+            subScenario?: components["schemas"]["TransactionSubScenario"];
+            note?: components["schemas"]["Note"];
+            currentState?: components["schemas"]["transferStatus"];
+            quoteId?: components["schemas"]["CorrelationId"];
+            getPartiesResponse?: {
+                body: Record<string, never>;
+                headers?: Record<string, never>;
+            };
+            quoteResponse?: {
+                body: components["schemas"]["QuotesIDPutResponse"];
+                headers?: Record<string, never>;
+            };
+            /** @description FSPID of the entity that supplied the quote response. This may not be the same as the FSPID of the entity which owns the end user account in the case of a FOREX transfer. i.e. it may be a FOREX gateway. */
+            quoteResponseSource?: string;
+            conversionRequestId?: components["schemas"]["CorrelationId"];
+            fxQuotesResponse?: {
+                body: components["schemas"]["FxQuotesPostOutboundResponse"];
+                headers?: Record<string, never>;
+            };
+            /** @description FXPID of the entity that supplied the fxQuotes response. */
+            fxQuotesResponseSource?: string;
+            fulfil?: {
+                body: components["schemas"]["TransfersIDPutResponse"];
+                headers?: Record<string, never>;
+            };
+            lastError?: components["schemas"]["transferError"];
+            /** @description Set to true if supplying an FSPID for the payee party and no party resolution is needed. This may be useful is a previous party resolution has been performed. */
+            skipPartyLookup?: boolean;
+        };
 
 export type TFineractOutboundTransferResponse = {
     totalAmountFromFineract: number;
@@ -80,8 +104,8 @@ export type TFineractOutboundTransferResponse = {
 
 export type TFineractTransferContinuationRequest = {
     transferContinuationAccept:
-        | SDKSchemeAdapter.V2_0_0.Outbound.Types.transferContinuationAcceptParty
-        | SDKSchemeAdapter.V2_0_0.Outbound.Types.transferContinuationAcceptQuote;
+    | SDKSchemeAdapter.V2_0_0.Outbound.Types.transferContinuationAcceptParty
+    | SDKSchemeAdapter.V2_0_0.Outbound.Types.transferContinuationAcceptQuote;
     fineractTransaction: {
         fineractAccountId: number;
         totalAmount: number;
@@ -93,7 +117,9 @@ export type TFineractTransferContinuationRequest = {
 
 export type TSDKTransferContinuationRequest =
     | SDKSchemeAdapter.V2_0_0.Outbound.Types.transferContinuationAcceptParty
-    | SDKSchemeAdapter.V2_0_0.Outbound.Types.transferContinuationAcceptQuote;
+    | SDKSchemeAdapter.V2_0_0.Outbound.Types.transferContinuationAcceptQuote
+    | components['schemas']['transferContinuationAcceptConversion'];
+
 
 export type TUpdateTransferDeps = {
     fineractTransaction: {
@@ -106,9 +132,7 @@ export type TUpdateTransferDeps = {
     sdkTransferId: number | string;
 };
 
-export type TtransferContinuationResponse =
-    | SDKSchemeAdapter.V2_0_0.Outbound.Types.transferResponse
-    | SDKSchemeAdapter.V2_0_0.Outbound.Types.errorTransferResponse;
+export type TtransferContinuationResponse = SDKSchemeAdapter.V2_0_0.Outbound.Types.transferResponse;
 
 export type TSDKClientDeps = {
     logger: ILogger;
@@ -120,6 +144,8 @@ export interface ISDKClient {
     initiateTransfer(transfer: TSDKOutboundTransferRequest): Promise<THttpResponse<TSDKOutboundTransferResponse>>;
     updateTransfer(
         transferAccept: TSDKTransferContinuationRequest,
-        id: number,
+        id: string,
     ): Promise<THttpResponse<TtransferContinuationResponse>>;
 }
+
+

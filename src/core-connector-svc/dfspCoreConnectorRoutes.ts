@@ -21,6 +21,8 @@
 
 
  - Okello Ivan Elijah <elijahokello90@gmail.com>
+ - Kasweka Michael Mukoko <kaswekamukoko@gmail.com>
+ - Niza Tembo <mcwayzj@gmail.com>
 
  --------------
  ******/
@@ -30,7 +32,7 @@
 import { CoreConnectorAggregate, ILogger } from '../domain';
 import { Request, ResponseToolkit, ServerRoute } from '@hapi/hapi';
 import OpenAPIBackend, { Context } from 'openapi-backend';
-import { TFineractOutboundTransferRequest, TFineractTransferContinuationRequest } from '../domain/SDKClient';
+import { TAirtelSendMoneyRequest, TAirtelUpdateSendMoneyRequest } from '../domain/CBSClient';
 import { BaseRoutes } from './BaseRoutes';
 
 const API_SPEC_FILE = './src/api-spec/core-connector-api-spec-dfsp.yml';
@@ -91,7 +93,7 @@ export class DFSPCoreConnectorRoutes extends BaseRoutes {
     }
 
     private async initiateTransfer(context: Context, request: Request, h: ResponseToolkit) {
-        const transfer = request.payload as TFineractOutboundTransferRequest;
+        const transfer = request.payload as TAirtelSendMoneyRequest;
         try {
             const result = await this.aggregate.sendTransfer(transfer);
             return this.handleResponse(result, h);
@@ -102,12 +104,9 @@ export class DFSPCoreConnectorRoutes extends BaseRoutes {
 
     private async updateInitiatedTransfer(context: Context, request: Request, h: ResponseToolkit) {
         const { params } = context.request;
-        const transferAccept = request.payload as TFineractTransferContinuationRequest;
+        const transferAccept = request.payload as TAirtelUpdateSendMoneyRequest;
         try {
-            const updateTransferRes = await this.aggregate.updateSentTransfer({
-                fineractTransaction: transferAccept.fineractTransaction,
-                sdkTransferId: params.transferId as string,
-            });
+            const updateTransferRes = await this.aggregate.updateSentTransfer(transferAccept, params["transferId"] as string);
             return this.handleResponse(updateTransferRes, h);
         } catch (error: unknown) {
             return this.handleError(error, h);

@@ -1,4 +1,34 @@
+/*****
+ License
+ --------------
+ Copyright © 2017 Bill & Melinda Gates Foundation
+ The Mojaloop files are made available by the Bill & Melinda Gates Foundation under the Apache License, Version 2.0 (the "License") and you may not use these files except in compliance with the License. You may obtain a copy of the License at
+
+ http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, the Mojaloop files are distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+
+ Contributors
+ --------------
+ This is the official list (alphabetical ordering) of the Mojaloop project contributors for this file.
+ Names of the original copyright holders (individuals or organizations)
+ should be listed with a '*' in the first column. People who have
+ contributed from an organization can be listed under the organization
+ that actually holds the copyright for their contributions (see the
+ Gates Foundation organization for an example). Those individuals should have
+ their names indented and be marked with a '-'. Email address can be added
+ optionally within square brackets <email>.
+
+
+ - Okello Ivan Elijah <elijahokello90@gmail.com>
+- Kasweka Michael Mukoko <kaswekamukoko@gmail.com>
+ - Niza Tembo <mcwayzj@gmail.com>
+
+ --------------
+ ******/
+
 import { IHTTPClient, ILogger, THttpResponse } from '../interfaces';
+import { components } from '@mojaloop/api-snippets/lib/sdk-scheme-adapter/v2_1_0/outbound/openapi';
 
 export enum IdType {
     MSISDN = 'MSISDN',
@@ -307,7 +337,7 @@ export type TAirtelConfig = {
     GRANT_TYPE: string;
     X_COUNTRY: string;
     X_CURRENCY: string;
-    SUPPORTED_ID_TYPE: string;
+    SUPPORTED_ID_TYPE: components["schemas"]["PartyIdType"];
     SERVICE_CHARGE: string;
     EXPIRATION_DURATION: string;
     AIRTEL_PIN: string;
@@ -351,7 +381,7 @@ export type TAirtelKycResponse = {
 export type TGetTokenResponse = {
     "access_token": string;
     "expires_in": string;
-    "token_type": string
+    "token_type": string
 }
 
 
@@ -363,7 +393,7 @@ export type TAirtelDisbursementRequestBody = {
     "reference": string,
     "pin": string,
     "transaction": {
-        "amount":number,
+        "amount": number,
         "id": string,
         "type": string
     }
@@ -372,7 +402,7 @@ export type TAirtelDisbursementRequestBody = {
 export type TAirtelDisbursementResponse = {
     "data": {
         "transaction": {
-            "reference_id":string,
+            "reference_id": string,
             "airtel_money_id": string,
             "id": string,
             "status": string,
@@ -387,6 +417,90 @@ export type TAirtelDisbursementResponse = {
     }
 }
 
+export type TAirtelSendMoneyResponse = {
+    "payeeDetails": string;
+    "receiveAmount": string;
+    "receiveCurrency": string;
+    "fees": string;
+    "feeCurrency": string;
+    "transactionId": string;
+}
+
+
+
+export type TAirtelSendMoneyRequest = {
+    "homeTransactionId": string;
+    "payeeId": string;
+    "payeeIdType": components["schemas"]["PartyIdType"];
+    "sendAmount": string;
+    "sendCurrency": components['schemas']['Currency'];
+    "receiveCurrency": string;
+    "transactionDescription": string;
+    "transactionType": components['schemas']['transferTransactionType'];
+    "payer": string;
+    "payerAccount": string;
+    "dateOfBirth": string;
+}
+
+
+export type TAirtelUpdateSendMoneyRequest = {
+    "acceptQuote": boolean;
+    "msisdn": string;
+    "amount": number;
+}
+
+export type TAirtelCollectMoneyRequest = {
+    "reference": string;
+    "subscriber": {
+        "country": string;
+        "currency": string;
+        "msisdn": string;
+    },
+    "transaction": {
+        "amount": number;
+        "country": string;
+        "currency": string;
+        "id": string;
+    }
+}
+
+export type TAirtelCollectMoneyResponse = {
+    "data": {
+        "transaction": {
+            "id": string;
+            "status": string;
+        }
+    },
+    "status": {
+        "code": string;
+        "message": string;
+        "result_code": string;
+        "response_code": string;
+        "success": boolean;
+    }
+}
+
+export type TAirtelRefundMoneyRequest = {
+    "transaction": {
+        "airtel_money_id": string;
+    }
+}
+
+export type TAirtelRefundMoneyResponse = {
+    "data": {
+        "transaction": {
+            "airtel_money_id": string;
+            "status": string;
+        }
+    },
+    "status": {
+        "code": string;
+        "message": string;
+        "result_code": string;
+        "success": boolean;
+    }
+}
+
 export interface IAirtelClient {
     airtelConfig: TAirtelConfig;
     httpClient: IHTTPClient;
@@ -394,5 +508,7 @@ export interface IAirtelClient {
     getKyc(deps: TGetKycArgs): Promise<TAirtelKycResponse>;
     getToken(deps: TGetTokenArgs): Promise<TGetTokenResponse>;
     sendMoney(deps: TAirtelDisbursementRequestBody): Promise<TAirtelDisbursementResponse>;
+    collectMoney(deps: TAirtelCollectMoneyRequest): Promise<TAirtelCollectMoneyResponse>;
+    refundMoney(deps: TAirtelRefundMoneyRequest): Promise<TAirtelRefundMoneyResponse>
 }
 
