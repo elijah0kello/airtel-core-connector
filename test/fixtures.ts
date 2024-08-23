@@ -185,7 +185,10 @@ export const transferPatchNotificationRequestDto: TtransferPatchNotificationRequ
         supportedCurrencies: undefined
       },
       amountType: 'SEND',
-      amount: '10',
+      amount: {
+        amount: '10',
+        currency:'KES'
+      },
       transactionType: {
         scenario: 'TRANSFER',
         subScenario: undefined,
