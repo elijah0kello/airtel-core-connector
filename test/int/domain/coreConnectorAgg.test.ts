@@ -34,7 +34,7 @@ import {
 import { AxiosClientFactory } from '../../../src/infra/axiosHttpClient';
 import { loggerFactory } from '../../../src/infra/logger';
 import config from '../../../src/config';
-import { transferPatchNotificationRequestDto } from '../../fixtures';
+import { transferPatchNotificationRequestDto, transferRequestDto, quoteRequestDto } from '../../fixtures';
 import { Service } from '../../../src/core-connector-svc';
 
 // const mockAxios = new MockAdapter(axios);
@@ -97,7 +97,7 @@ describe('CoreConnectorAggregate Tests -->', () => {
 
         test('Test Get Transfer Quote (Get Quotes)', async () => {
             try {
-                const res = await ccAggregate.getParties('777503758', 'MSISDN');
+                const res = await ccAggregate.quoteRequest(quoteRequestDto());
             } catch (error) {
                 if (error instanceof AirtelError) {
                     expect(error.httpCode).toEqual(500);
